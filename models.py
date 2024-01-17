@@ -45,3 +45,21 @@ class TrainableChannelFusion(nn.Module):
         x = x[:, -1, :]
         x = self.fc(x)
         return x
+
+
+class TrainableChannelFusion2(nn.Module):
+    def __init__(self, input_size, hidden_size, num_classes, num_layers=1, bidirectional=False, dropout_rate=0.0):
+        super(TrainableChannelFusion2, self).__init__()
+        self.attention_weights = nn.Parameter(torch.randn(input_size))
+        self.lstm = nn.LSTM(input_size=input_size, hidden_size=hidden_size, 
+                            num_layers=num_layers, batch_first=True, 
+                            bidirectional=bidirectional, dropout=dropout_rate)
+        self.fc = nn.Linear(hidden_size * 2 if bidirectional else hidden_size, num_classes)
+
+    def forward(self, x):
+        weights = F.softmax(self.attention_weights, dim=0)
+        x = x * weights
+        x, _ = self.lstm(x)
+        x = x[:, -1, :]
+        x = self.fc(x)
+        return x
